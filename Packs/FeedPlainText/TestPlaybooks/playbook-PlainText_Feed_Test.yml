@@ -6,11 +6,10 @@ starttaskid: "0"
 tasks:
   "0":
     id: "0"
-    taskid: 5b16bdc7-67f9-4731-8f9b-a122665c45c5
+    taskid: 828f2afa-b2aa-4593-8169-d8bc7342cc1e
     type: start
     task:
-      elasticcommonfields: {}
-      id: 5b16bdc7-67f9-4731-8f9b-a122665c45c5
+      id: 828f2afa-b2aa-4593-8169-d8bc7342cc1e
       version: -1
       name: ""
       iscommand: false
@@ -33,11 +32,10 @@ tasks:
     quietmode: 0
   "1":
     id: "1"
-    taskid: 08394a00-fdc4-4c83-8e23-6ca9a0143783
+    taskid: 266080cd-7b6b-4db9-8d0d-355ee8f2bf6f
     type: regular
     task:
-      elasticcommonfields: {}
-      id: 08394a00-fdc4-4c83-8e23-6ca9a0143783
+      id: 266080cd-7b6b-4db9-8d0d-355ee8f2bf6f
       version: -1
       name: Get Indicators
       description: Gets indicators from the feed.
@@ -70,11 +68,10 @@ tasks:
     quietmode: 0
   "2":
     id: "2"
-    taskid: dcaca2b5-9626-4ae0-87bf-b352ebf4b367
+    taskid: 7a7918fc-dba0-4880-8e2f-a34c68ad823e
     type: condition
     task:
-      elasticcommonfields: {}
-      id: dcaca2b5-9626-4ae0-87bf-b352ebf4b367
+      id: 7a7918fc-dba0-4880-8e2f-a34c68ad823e
       version: -1
       name: Assert Output
       description: Asserts output.
@@ -83,7 +80,7 @@ tasks:
       brand: ""
     nexttasks:
       "yes":
-      - "3"
+      - "5"
     separatecontext: false
     conditions:
     - label: "yes"
@@ -119,11 +116,10 @@ tasks:
     quietmode: 0
   "3":
     id: "3"
-    taskid: 2b42f340-2fc4-4cbf-8e77-1775d7b36512
+    taskid: 6d5521b3-161f-4934-8815-a2be2584298c
     type: title
     task:
-      elasticcommonfields: {}
-      id: 2b42f340-2fc4-4cbf-8e77-1775d7b36512
+      id: 6d5521b3-161f-4934-8815-a2be2584298c
       version: -1
       name: Done
       description: Done
@@ -135,7 +131,7 @@ tasks:
       {
         "position": {
           "x": 50,
-          "y": 720
+          "y": 940
         }
       }
     note: false
@@ -145,15 +141,14 @@ tasks:
     quietmode: 0
   "4":
     id: "4"
-    taskid: 82a7e53a-b66c-47f1-8d7b-8e34403ffd13
+    taskid: 5cfd0680-a0dd-46fa-8a05-df358767362e
     type: regular
     task:
-      elasticcommonfields: {}
-      id: 82a7e53a-b66c-47f1-8d7b-8e34403ffd13
+      id: 5cfd0680-a0dd-46fa-8a05-df358767362e
       version: -1
       name: Delete Context
       description: Delete field from context.
-      scriptName: DeleteContext
+      script: DeleteContext
       type: regular
       iscommand: false
       brand: ""
@@ -180,12 +175,49 @@ tasks:
     ignoreworker: false
     skipunavailable: false
     quietmode: 0
+  "5":
+    id: "5"
+    taskid: 2a683fa3-93c5-4c7c-8e52-05f47e6d303b
+    type: regular
+    task:
+      id: 2a683fa3-93c5-4c7c-8e52-05f47e6d303b
+      version: -1
+      name: Untitled Task
+      description: Check if a docker image is available for performing docker pull.
+        Script simulates the docker pull flow but doesn't actually pull the image.
+        Returns an entry with 'ok' if all is good otherwise will return an error.
+      scriptName: CheckDockerImageAvailable
+      type: regular
+      iscommand: false
+      brand: ""
+    nexttasks:
+      '#none#':
+      - "3"
+    scriptarguments:
+      input:
+        simple: test
+      trust_any_certificate:
+        simple: "no"
+      use_system_proxy: {}
+    separatecontext: false
+    view: |-
+      {
+        "position": {
+          "x": 50,
+          "y": 750
+        }
+      }
+    note: false
+    timertriggers: []
+    ignoreworker: false
+    skipunavailable: false
+    quietmode: 0
 view: |-
   {
     "linkLabelsPosition": {},
     "paper": {
       "dimensions": {
-        "height": 735,
+        "height": 955,
         "width": 380,
         "x": 50,
         "y": 50
