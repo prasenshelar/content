@@ -38,6 +38,7 @@ class Client(BaseClient):
             'Authorization': registration_id,
             'Accept': 'application/json'
         }
+        
         super().__init__(base_url=token_retrieval_url, headers=headers, verify=use_ssl, proxy=proxy)
         self.refresh_token = refresh_token
         self.enc_key = enc_key
