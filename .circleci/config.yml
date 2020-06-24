@@ -13,9 +13,9 @@ parameters:
 references:
   environment: &environment
     environment:
-      CONTENT_VERSION: "20.6.0"
+      CONTENT_VERSION: "20.6.1"
       SERVER_VERSION: "5.5.0"
-      GIT_SHA1: "63646dff0fba977f91d6d9fc2d7fd233bfb5561b" # guardrails-disable-line disable-secrets-detection
+      GIT_SHA1: "85b138633bcc10cedb4d6f4ed6e7074c28dd13d7" # guardrails-disable-line disable-secrets-detection
       NON_AMI_RUN: << pipeline.parameters.non_ami_run >>
       ARTIFACT_BUILD_NUM: << pipeline.parameters.artifact_build_num >>
       SERVER_BRANCH_NAME: << pipeline.parameters.server_branch_name >>
@@ -46,6 +46,11 @@ references:
       name: Prepare Environment
       when: always
       command: |
+        if [ -n "${INSTANCE_TESTS}" ] && [ $CIRCLE_NODE_INDEX -ne 0 ] ;
+          then
+            echo "Skipping - instance tests tasks are running only in container number 0"
+            exit 0
+        fi
         echo 'export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"' >> $BASH_ENV
         echo 'export PATH="/home/circleci/.local/bin:${PWD}/node_modules/.bin:${PATH}"' >> $BASH_ENV # disable-secrets-detection
         echo 'export PYTHONPATH="/home/circleci/project:${PYTHONPATH}"' >> $BASH_ENV
@@ -116,57 +121,15 @@ references:
         - project
 jobs:
   build:
-    docker:
-      - image: devdemisto/content-build:3.0.0.7332  # disable-secrets-detection
+    <<: *container_config
     parallelism: 2
-    environment:
-      CONTENT_VERSION: "20.6.1"
-      SERVER_VERSION: "5.5.0"
-      GIT_SHA1: "85b138633bcc10cedb4d6f4ed6e7074c28dd13d7" # guardrails-disable-line disable-secrets-detection
+    <<: *environment
     steps:
       - checkout
       - setup_remote_docker
       - restore_cache:
           key: venv-{{ checksum "dev-requirements-py2.txt" }}-{{ checksum "dev-requirements-py3.txt" }}-{{ checksum ".circleci/build-requirements.txt" }}-{{ checksum "package-lock.json" }}
-      - run:
-          name: Prepare Environment
-          when: always
-          command: |
-            if [ -n "${INSTANCE_TESTS}" ] && [ $CIRCLE_NODE_INDEX -ne 0 ] ;
-              then
-                echo "Skipping - instance tests tasks are running only in container number 0"
-                exit 0
-            fi
-            echo 'export CIRCLE_ARTIFACTS="/home/circleci/project/artifacts"' >> $BASH_ENV
-            echo 'export PATH="/home/circleci/.local/bin:${PWD}/node_modules/.bin:${PATH}"' >> $BASH_ENV # disable-secrets-detection
-            echo 'export PYTHONPATH="/home/circleci/project:${PYTHONPATH}"' >> $BASH_ENV
-            echo 'export DEMISTO_README_VALIDATION=true' >> $BASH_ENV
-            echo "=== sourcing $BASH_ENV ==="
-            source $BASH_ENV
-            sudo mkdir -p -m 777 $CIRCLE_ARTIFACTS
-            chmod +x ./Tests/scripts/*
-            chmod +x ./Tests/lastest_server_build_scripts/*
-            if [ ! -e "venv" ]; then
-              echo "installing venv"
-              NO_HOOKS=1 SETUP_PY2=yes .hooks/bootstrap
-              source ./venv/bin/activate
-              pip install -r .circleci/build-requirements.txt
-              pip3 install -r .circleci/build-requirements.txt
-            else
-              echo "venv exists (from cache). activating"
-              source ./venv/bin/activate
-            fi
-            # Install node packages
-            npm install .
-            # store in bash env so we load our venv in each step
-            echo 'source /home/circleci/project/venv/bin/activate' >> $BASH_ENV
-            git config diff.renameLimit 6000
-
-            echo "========== Build Parameters =========="
-            echo "Parameters: NIGHTLY: $NIGHTLY, INSTANCE_TESTS: $INSTANCE_TESTS, NON_AMI_RUN: $NON_AMI_RUN, SERVER_BRANCH_NAME: $SERVER_BRANCH_NAME, ARTIFACT_BUILD_NUM: $ARTIFACT_BUILD_NUM"
-            python --version
-            python3 --version
-            demisto-sdk --version
+      - *prepare_environment
       - save_cache:
           paths:
             - venv
@@ -747,7 +710,7 @@ jobs:
           command: ./Tests/scripts/upload_artifacts.sh
           when: always
 
-  pre-build:
+  Prepare Environment:
     <<: *container_config
     resource_class: medium+
     <<: *environment
@@ -812,7 +775,7 @@ jobs:
             ./Tests/scripts/slack_notifier.sh 'unittests' ./env_results.json
           when: always
       - *store_artifacts
-  Validations:
+  Run Validations:
     <<: *container_config
     resource_class: medium+
     <<: *environment
@@ -1308,23 +1271,23 @@ workflows:
   nightly-workflows:
     triggers:
       - schedule:
-          # should trigger every day at 22:00 PM UTC (1 AM Israel Time)
-          cron: "0 22 * * *"
+          # should trigger every day at 20:00 PM UTC (11 PM Israel Time)
+          cron: "0 20 * * *"
           filters:
             branches:
               only:
                 - config_yaml
     jobs:
-      - pre-build:
+      - Prepare Environment:
           context: nightly_env
       - Create Instances:
           context: nightly_env
       - Run Unit Testing And Lint:
           requires:
-            - pre-build
-      - Validations:
+            - Prepare Environment
+      - Run Validations:
           requires:
-            - pre-build
+            - Prepare Environment
       - Server 6_0:
           requires:
             - Create Instances
